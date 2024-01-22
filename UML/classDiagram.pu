@@ -1,0 +1,207 @@
+@startuml
+skinparam style strictuml
+skinparam maxMessageSize 100
+
+interface StateFuzzer {
+    LEARNED_MODEL_FILENAME: String
+    STATISTICS_FILENAME: String
+    MAPPER_CONNECTION_CONFIG_FILENAME: String
+    ALPHABET_FILENAME_NO_EXTENSION: String
+    ERROR_FILENAME: String
+    LEARNED_MODEL_FILENAME: String
+
+    startFuzzing(): LearnerResult
+}
+
+class StateFuzzerRA implements StateFuzzer {
+    LOGGER: Logger
+}
+
+interface StateFuzzerComposer {
+    NON_DET_FILENAME: String
+    QUERY_FILENAME: String
+
+    getStatisticsTracker: StatisticsTracker
+    getLearner(): LearningAlgorithm.MealyLearner<AbstractInput, \nAbstractOutput>
+    getEquivalenceOracle(): EquivalenceOracle<MealyMachine<?, \nAbstractInput, ?, AbstractOutput>, AbstractInput, \nWord<AbstractOutput>>
+    getAlphabet(): Alphabet<AbstractInput>
+    getAlphabetFileInputStream(): InputStream
+    getAlphabetFileExtension(): String
+    getStateFuzzerEnabler(): StateFuzzerEnabler
+    getOutputDir(): File
+    getCleanupTasks(): CleanupTasks
+}
+
+class CommandLineParser {
+    LOGGER: Logger
+    CMD_STATE_FUZZER_CLIENT: String
+    CMD_STATE_FUZZER_SERVER: String
+    ARGS_FILE: String
+    programName: String
+    stateFuzzerConfigBuilder: StateFuzzerConfigBuilder
+    stateFuzzerBuilder: StateFuzzerBuilder
+    testRunnerBuilder: TestRunnerBuilder
+    timingProbeBuilder: TimingProbeBuilder
+    externalParentLoggers: String[]
+
+    getBasePackageName(): String
+    CommandLineParser(stateFuzzerConfigBuilder: \nStateFuzzerConfigBuilder, stateFuzzerBuilder: StateFuzzerBuilder,\ntestRunnerBuilder: TestRunnerBuilder, timingProbeBuilder: \nTimingProbeBuilder): void
+    setProgramName(programName: String): void
+    setExternalParentLoggers(externalParentLoggers: String[]): void
+    parse(args: String[], exportToPDF: boolean, consumers: \nList<Consumer<LearnerResult>>): List<LearnerResult>
+    parse(args: String[], exportToPDF: boolean): List<LearnerResult>
+    parse(args: String[]): List<LearnerResult>
+    parseAndExecuteCommand(args: String[]): LearnerResult
+    parseCommand(args: String[]): ParseResult
+    executeCommand(parseResult: ParseResult): LearnerResult
+    buildCommander(parseOnlyDynamicParameters: boolean, \nstateFuzzerClientConfig: StateFuzzerClientConfig, \nstateFuzzerServerConfig: StateFuzzerServerConfig): JCommander
+    updateLoggingLevel(externalParentLoggers: String[], level: Level)
+    prepareOutputDir(args: String[], outDir: String): void
+    copyArgsToOutDir(args: String[], outDir: String): void
+    ParseResult: ParseResult
+}
+
+CommandLineParser *-- ParseResult : contains
+
+class ParseResult {
+    args: String[]
+    commander: JCommander
+
+    ParseResult(args: String[], commander: JCommander): void
+    getArgs(): String[]
+    getCommander(): JCommander
+    isValid(): boolean
+    getObjectFromParsedCommand(): Object
+    getObjectFromParsedCommand(index: int): Object
+}
+
+class StateMachine {
+    LOGGER: Logger
+    mealyMachine: MealyMachine<?, AbstractInput, ?, AbstractOutput>
+    alphabet: Alphabet<AbstractInput>
+
+    StateMachine(mealyMachine: MealyMachine<?, AbstractInput, ?, \nAbstractOutput>, alphabet: Alphabet<AbstractInput>)
+    getMealyMachine(): MealyMachine<?, AbstractInput, ?, \nAbstractOutput>
+    getAlphabet(): Alphabet<AbstractInput>
+    export(graphFile: File): void
+    copy(): StateMachine
+    toString(): String
+}
+
+class LearnerResult {
+    hypotheses: List<StateMachine>
+    learnedModel: StateMachine
+    learnedModelFile: File
+    statistics: Statistics
+    stateFuzzerEnabler: StateFuzzerEnabler
+
+    LearnerResult(): void
+    toEmpty(): LearnerResult
+    isEmpty(): boolean
+    toNormal(): LearnerResult
+    addHypothesis(hypothesis: StateMachine): void
+    getHypotheses(): List<StateMachine>
+    getLearnedModel(): StateMachine
+    setLearnedModel(learnedModel: StateMachine): void
+    getLearnedModelFile(): File
+    setLearnedModelFile(learnedModelFile: File): void
+    getStatistics(): Statistics
+    setStatistics(statistics: Statistics): void
+    getStateFuzzerEnabler(): StateFuzzerEnabler
+    setStateFuzzerEnabler(stateFuzzerEnabler: StateFuzzerEnabler): void
+}
+
+abstract class ParameterizedSymbol {
+    name: String
+    ptypes: DataType[]
+
+    ParameterizedSymbol(name: String, ptypes: DataType...): void
+    hashCode(): int
+    equals(obj: Object): boolean
+    toString(): String
+    getName(): String
+    getArity(): int
+    getPtypes(): DataType[]
+}
+
+class OutputSymbol extends ParameterizedSymbol {
+    OutputSymbol(name: String, ptypes: DataType...)
+    toString(): String
+}
+
+class InputSymbol extends ParameterizedSymbol {
+    InputSymbol(name: String, ptypes: DataType...)
+    toString(): String
+}
+
+abstract class AbstractSymbol {
+    name: String
+    isInput: boolean
+    
+    AbstractSymbol(isInput: boolean): void
+    AbstractSymbol(name: string, isInput: boolean): void
+    getName(): String
+    setName(name: String): void
+    getIsInput(): boolean
+    inputDistinguishingName(): String
+    toString(): String
+}
+
+abstract class AbstractInput extends AbstractSymbol {
+    extendedWait: Long
+
+    AbstractInput(): void
+    AbstractInput(name: String): void
+    getExtendedWait(): Long
+    setExtendedWait(extendedWait: Long): void
+    getPreferredMapper(sulConfig: SulConfig): Mapper
+    isEnabled(context: ExecutionContext): boolean
+    preSendUpdate(context: ExecutionContext): void
+    generateProtocolMessage(context: ExecutionContext): \nProtocolMessage
+    postSendUpdate(context: ExecutionContext): void
+    postReceiveUpdate(output: AbstractOutput, \nabstractOutputChecker: AbstractOutputChecker, context: \nExecutionContext): void
+    getInputType(): Enum<?>
+}
+
+abstract class AbstractOutput extends AbstractSymbol {
+    MESSAGE_SEPARATOR: String
+    REPEATING_INDICATOR: String
+    TIMEOUT: String
+    UNKNOWN_MESSAGE: String
+    SOCKET_CLOSED: String
+    DISABLED: String
+    specialOutputsMap: Map<String, AbstractOutput>
+    alive: boolean
+    messages: List<ProtocolMessage>
+
+    timeout(): AbstractOutput
+    unknown(): AbstractOutput
+    socketClosed(): AbstractOutput
+    disabled(): AbstractOutput
+    getSpecialOutput(symbolName: String): AbstractOutput
+    AbstractOutput(): void
+    AbstractOutput(name: String): void
+    AbstractOutput(name: String, messages: List<ProtocolMessage>)
+    isComposite(): boolean
+    isAtomic(): boolean
+    isRepeating(): boolean
+    getRepeatedOutput(): AbstractOutput
+    isTimeout(): boolean
+    isSocketClosed(): boolean
+    isDisabled(): boolean
+    isRecordResponse(): boolean
+    hasMessages(): boolean
+    getAtomicOutputs(): List<AbstractOutput>
+    getAtomicOutputs(unrollRepeating: int): List<AbstractOutput>
+    getAtomicAbstractionStrings(): List<String>
+    getAtomicAbstractionStrings(unrollRepeating: int): List<String>
+    toDetailedString(): String
+    buildContentInfo(): String
+    getMessages(): List<ProtocolMessage>
+    isAlive(): boolean
+    setAlive(): void
+    equals(o: Object): boolean
+    hashCode(): int
+}
+
+@enduml
