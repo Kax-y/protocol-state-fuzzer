@@ -1,4 +1,4 @@
-@startuml
+@startuml PSF
 skinparam style strictuml
 skinparam maxMessageSize 100
 
@@ -15,6 +15,27 @@ interface StateFuzzer {
 
 class StateFuzzerRA implements StateFuzzer {
     LOGGER: Logger
+
+    startFuzzing(): LearnerResult
+    
+}
+
+class StateFuzzerStandard implements StateFuzzer {
+    LOGGER: Logger
+    ALPHABET_FILENAME: String
+    stateFuzzerComposer: StateFuzzerComposer
+    alphabet: Alphabet<AbstractInput>
+    outputDir: File
+    cleanupTasks: CleanupTasks
+    stateFuzzerEnabler: StateFuzzerEnabler
+
+    StateFuzzerStandard(stateFuzzerComposer: StateFuzzerComposer)
+    startFuzzing(): LearnerResult
+    inferStateMachine(): LearnerResult
+    copyInputsToOutputDir(outputDir: File): void
+    writeToFile(inputStream: InputStream, outputFile: File): void
+    roundLimitToInt(roundLimit: Integer): int
+    exportHypothesis(hypothesis: StateMachine, destination: File): void
 }
 
 interface StateFuzzerComposer {
@@ -61,8 +82,6 @@ class CommandLineParser {
     ParseResult: ParseResult
 }
 
-CommandLineParser *-- ParseResult : contains
-
 class ParseResult {
     args: String[]
     commander: JCommander
@@ -75,7 +94,16 @@ class ParseResult {
     getObjectFromParsedCommand(index: int): Object
 }
 
-class StateMachine {
+abstract class AbstractStateMachine {
+    LOGGER: Logger
+    -alphabet: Alphabet<?>
+    +getAlphabet(): Alphabet<?>
+    +export(graphFile: File): void
+    +Copy(): AbstractStateMachine
+    toString(): String
+}
+
+class StateMachine extends AbstractStateMachine {
     LOGGER: Logger
     mealyMachine: MealyMachine<?, AbstractInput, ?, AbstractOutput>
     alphabet: Alphabet<AbstractInput>
@@ -86,6 +114,16 @@ class StateMachine {
     export(graphFile: File): void
     copy(): StateMachine
     toString(): String
+}
+
+class RAStateMachine extends AbstractStateMachine {
+    -alphabet: Alphabet<ParameterizedSymbol>
+    +getAlphabet(): Alphabet<ParameterizedSymbol>
+    export(graphFile: File): void
+    copy(): RAStateMachine
+    toString(): String
+    RAStateMachine(automata: RegisterAutomata, alphabet: Alphabet<ParameterizedSymbol>)
+    getRAStateMachine(): RegisterAutomata
 }
 
 class LearnerResult {
@@ -111,6 +149,7 @@ class LearnerResult {
     setStateFuzzerEnabler(stateFuzzerEnabler: StateFuzzerEnabler): void
 }
 
+note top of ParameterizedSymbol : Note that this is from RALib.
 abstract class ParameterizedSymbol {
     name: String
     ptypes: DataType[]
@@ -145,6 +184,17 @@ abstract class AbstractSymbol {
     getIsInput(): boolean
     inputDistinguishingName(): String
     toString(): String
+}
+
+interface StateFuzzerEnabler {
+    getLearnerConfig(): LearnerConfig
+    getSulConfig(): SulConfig
+    isFuzzingClient(): boolean
+    getOutputDir(): String
+}
+
+interface StateFuzzerBuilder {
+    build(stateFuzzerEnabler: StateFuzzerEnabler): StateFuzzer
 }
 
 abstract class AbstractInput extends AbstractSymbol {
@@ -203,5 +253,23 @@ abstract class AbstractOutput extends AbstractSymbol {
     equals(o: Object): boolean
     hashCode(): int
 }
+
+interface AlphabetBuilder {
+    DEFAULT_ALPHABET_NO_EXTENSION: String
+    
+    build(alphabetProvider: AlphabetProvider): Alphabet<AbstractInput>
+    getAlphabetFileInputStream(alphabetProvider: AlphabetProvider): InputStream
+    getAlphabetFileExtension(): String
+    exportAlphabetToFile(outputFileName: String, alphabet: Alphabet<AbstractInput>): void
+}
+
+CommandLineParser *-- ParseResult : contains
+CommandLineParser <-- StateFuzzerBuilder
+StateFuzzerBuilder <-- StateFuzzerEnabler
+StateFuzzerBuilder <-- StateFuzzer
+StateFuzzer <-- LearnerResult
+LearnerResult <-- AbstractStateMachine
+AlphabetBuilder <-- AbstractInput
+StateFuzzerStandard <-- StateFuzzerComposer
 
 @enduml
