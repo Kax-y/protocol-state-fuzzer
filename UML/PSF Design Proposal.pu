@@ -1,6 +1,4 @@
 @startuml PSF
-skinparam style strictuml
-skinparam maxMessageSize 100
 
 interface StateFuzzer {
     LEARNED_MODEL_FILENAME: String
@@ -38,12 +36,14 @@ class StateFuzzerStandard implements StateFuzzer {
     exportHypothesis(hypothesis: StateMachine, destination: File): void
 }
 
+
+note top of StateFuzzerComposer: Make more general for use with RA,\nintroduce possible abstractions over learnlib/Ralib types
 interface StateFuzzerComposer {
     NON_DET_FILENAME: String
     QUERY_FILENAME: String
 
     getStatisticsTracker: StatisticsTracker
-    getLearner(): LearningAlgorithm.MealyLearner<AbstractInput, \nAbstractOutput>
+    getLearner(): ?
     getEquivalenceOracle(): EquivalenceOracle<MealyMachine<?, \nAbstractInput, ?, AbstractOutput>, AbstractInput, \nWord<AbstractOutput>>
     getAlphabet(): Alphabet<AbstractInput>
     getAlphabetFileInputStream(): InputStream
@@ -122,7 +122,7 @@ class RAStateMachine extends AbstractStateMachine {
     export(graphFile: File): void
     copy(): RAStateMachine
     toString(): String
-    RAStateMachine(automata: RegisterAutomata, alphabet: Alphabet<ParameterizedSymbol>)
+    RAStateMachine(automata:\nRegisterAutomata, alphabet: Alphabet<ParameterizedSymbol>)
     getRAStateMachine(): RegisterAutomata
 }
 
@@ -149,43 +149,6 @@ class LearnerResult {
     setStateFuzzerEnabler(stateFuzzerEnabler: StateFuzzerEnabler): void
 }
 
-note top of ParameterizedSymbol : Note that this is from RALib.
-abstract class ParameterizedSymbol {
-    name: String
-    ptypes: DataType[]
-
-    ParameterizedSymbol(name: String, ptypes: DataType...): void
-    hashCode(): int
-    equals(obj: Object): boolean
-    toString(): String
-    getName(): String
-    getArity(): int
-    getPtypes(): DataType[]
-}
-
-class OutputSymbol extends ParameterizedSymbol {
-    OutputSymbol(name: String, ptypes: DataType...)
-    toString(): String
-}
-
-class InputSymbol extends ParameterizedSymbol {
-    InputSymbol(name: String, ptypes: DataType...)
-    toString(): String
-}
-
-abstract class AbstractSymbol {
-    name: String
-    isInput: boolean
-    
-    AbstractSymbol(isInput: boolean): void
-    AbstractSymbol(name: string, isInput: boolean): void
-    getName(): String
-    setName(name: String): void
-    getIsInput(): boolean
-    inputDistinguishingName(): String
-    toString(): String
-}
-
 interface StateFuzzerEnabler {
     getLearnerConfig(): LearnerConfig
     getSulConfig(): SulConfig
@@ -197,70 +160,24 @@ interface StateFuzzerBuilder {
     build(stateFuzzerEnabler: StateFuzzerEnabler): StateFuzzer
 }
 
-abstract class AbstractInput extends AbstractSymbol {
-    extendedWait: Long
+interface PSFLearner {
+    -learningAlgorithm: ?
 
-    AbstractInput(): void
-    AbstractInput(name: String): void
-    getExtendedWait(): Long
-    setExtendedWait(extendedWait: Long): void
-    getPreferredMapper(sulConfig: SulConfig): Mapper
-    isEnabled(context: ExecutionContext): boolean
-    preSendUpdate(context: ExecutionContext): void
-    generateProtocolMessage(context: ExecutionContext): \nProtocolMessage
-    postSendUpdate(context: ExecutionContext): void
-    postReceiveUpdate(output: AbstractOutput, \nabstractOutputChecker: AbstractOutputChecker, context: \nExecutionContext): void
-    getInputType(): Enum<?>
+    +startLearning(): void
+    +getHypothesis(): AbstractStateMachine
+    +refineHypothesis(DefaultQuery<?,?>): boolean
 }
 
-abstract class AbstractOutput extends AbstractSymbol {
-    MESSAGE_SEPARATOR: String
-    REPEATING_INDICATOR: String
-    TIMEOUT: String
-    UNKNOWN_MESSAGE: String
-    SOCKET_CLOSED: String
-    DISABLED: String
-    specialOutputsMap: Map<String, AbstractOutput>
-    alive: boolean
-    messages: List<ProtocolMessage>
-
-    timeout(): AbstractOutput
-    unknown(): AbstractOutput
-    socketClosed(): AbstractOutput
-    disabled(): AbstractOutput
-    getSpecialOutput(symbolName: String): AbstractOutput
-    AbstractOutput(): void
-    AbstractOutput(name: String): void
-    AbstractOutput(name: String, messages: List<ProtocolMessage>)
-    isComposite(): boolean
-    isAtomic(): boolean
-    isRepeating(): boolean
-    getRepeatedOutput(): AbstractOutput
-    isTimeout(): boolean
-    isSocketClosed(): boolean
-    isDisabled(): boolean
-    isRecordResponse(): boolean
-    hasMessages(): boolean
-    getAtomicOutputs(): List<AbstractOutput>
-    getAtomicOutputs(unrollRepeating: int): List<AbstractOutput>
-    getAtomicAbstractionStrings(): List<String>
-    getAtomicAbstractionStrings(unrollRepeating: int): List<String>
-    toDetailedString(): String
-    buildContentInfo(): String
-    getMessages(): List<ProtocolMessage>
-    isAlive(): boolean
-    setAlive(): void
-    equals(o: Object): boolean
-    hashCode(): int
+class RALearner implements PSFLearner {
+    +startLearning(): void
+    +getHypothesis(): RAStateMachine
+    +refineHypothesis(DefaultQuery<PSymbolInstance, Boolean>): boolean 
 }
 
-interface AlphabetBuilder {
-    DEFAULT_ALPHABET_NO_EXTENSION: String
-    
-    build(alphabetProvider: AlphabetProvider): Alphabet<AbstractInput>
-    getAlphabetFileInputStream(alphabetProvider: AlphabetProvider): InputStream
-    getAlphabetFileExtension(): String
-    exportAlphabetToFile(outputFileName: String, alphabet: Alphabet<AbstractInput>): void
+class MealyLearner implements PSFLearner{
+    +startLearning(): void
+    +getHypothesis(): StateMachine
+    +refineHypothesis(counterExample:\nDefaultQuery<AbstractInput,Word<AbstractOutput>>): boolean
 }
 
 CommandLineParser *-- ParseResult : contains
@@ -269,7 +186,8 @@ StateFuzzerBuilder <-- StateFuzzerEnabler
 StateFuzzerBuilder <-- StateFuzzer
 StateFuzzer <-- LearnerResult
 LearnerResult <-- AbstractStateMachine
-AlphabetBuilder <-- AbstractInput
+
 StateFuzzerStandard <-- StateFuzzerComposer
+StateFuzzerComposer <-- PSFLearner
 
 @enduml
