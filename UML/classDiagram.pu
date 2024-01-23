@@ -1,4 +1,4 @@
-@startuml
+@startuml PSF
 skinparam style strictuml
 skinparam maxMessageSize 100
 
@@ -61,8 +61,6 @@ class CommandLineParser {
     ParseResult: ParseResult
 }
 
-CommandLineParser *-- ParseResult : contains
-
 class ParseResult {
     args: String[]
     commander: JCommander
@@ -111,6 +109,7 @@ class LearnerResult {
     setStateFuzzerEnabler(stateFuzzerEnabler: StateFuzzerEnabler): void
 }
 
+note top of ParameterizedSymbol : Note that this is from RALib.
 abstract class ParameterizedSymbol {
     name: String
     ptypes: DataType[]
@@ -145,6 +144,17 @@ abstract class AbstractSymbol {
     getIsInput(): boolean
     inputDistinguishingName(): String
     toString(): String
+}
+
+interface StateFuzzerEnabler {
+    getLearnerConfig(): LearnerConfig
+    getSulConfig(): SulConfig
+    isFuzzingClient(): boolean
+    getOutputDir(): String
+}
+
+interface StateFuzzerBuilder {
+    build(stateFuzzerEnabler: StateFuzzerEnabler): StateFuzzer
 }
 
 abstract class AbstractInput extends AbstractSymbol {
@@ -203,5 +213,40 @@ abstract class AbstractOutput extends AbstractSymbol {
     equals(o: Object): boolean
     hashCode(): int
 }
+
+class StateFuzzerStandard implements StateFuzzer {
+    LOGGER: Logger
+    ALPHABET_FILENAME: String
+    stateFuzzerComposer: StateFuzzerComposer
+    alphabet: Alphabet<AbstractInput>
+    outputDir: File
+    cleanupTasks: CleanupTasks
+    stateFuzzerEnabler: StateFuzzerEnabler
+
+    StateFuzzerStandard(stateFuzzerComposer: StateFuzzerComposer)
+    stateFuzzing(): LearnerResult
+    inferStateMachine(): LearnerResult
+    copyInputsToOutputDir(outputDir: File): void
+    writeToFile(inputStream: InputStream, outputFile: File): void
+    roundLimitToInt(roundLimit: Integer): int
+    exportHypothesis(hypothesis: StateMachine, destination: File): void
+}
+
+interface AlphabetBuilder {
+    DEFAULT_ALPHABET_NO_EXTENSION: String
+    build(alphabetProvider: AlphabetProvider): Alphabet<AbstractInput>
+    getAlphabetFileInputStream(alphabetProvider: AlphabetProvider): InputStream
+    getAlphabetFileExtension(): String
+    exportAlphabetToFile(outputFileName: String, alphabet: Alphabet<AbstractInput>): void
+}
+
+CommandLineParser *-- ParseResult : contains
+CommandLineParser <-- StateFuzzerBuilder
+StateFuzzerBuilder <-- StateFuzzerEnabler
+StateFuzzerBuilder <-- StateFuzzer
+StateFuzzer <-- LearnerResult
+LearnerResult <-- StateMachine
+AlphabetBuilder <-- AbstractInput
+StateFuzzerStandard <-- StateFuzzerComposer
 
 @enduml
