@@ -37,14 +37,14 @@ class StateFuzzerStandard implements StateFuzzer {
 }
 
 
-note top of StateFuzzerComposer: Make more general for use with RA,\nintroduce possible abstractions over learnlib/Ralib types
+note top of StateFuzzerComposer: Make more general for use with RA,\nintroduce possible abstractions over Learnlib/RALib types
 interface StateFuzzerComposer {
     NON_DET_FILENAME: String
     QUERY_FILENAME: String
 
     getStatisticsTracker: StatisticsTracker
-    getLearner(): ?
-    getEquivalenceOracle(): EquivalenceOracle<MealyMachine<?, \nAbstractInput, ?, AbstractOutput>, AbstractInput, \nWord<AbstractOutput>>
+    getLearner(): PSFLearner
+    getEquivalenceOracle(): EquivalenceOracle<AbstractStateMachine, AbstractInput, \nWord<AbstractOutput>>
     getAlphabet(): Alphabet<AbstractInput>
     getAlphabetFileInputStream(): InputStream
     getAlphabetFileExtension(): String

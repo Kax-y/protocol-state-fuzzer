@@ -1,4 +1,47 @@
-@startuml ParameterizedSymbol AbstractInput comparison diagram
+@startuml Abstracting IO from AbstractInput/Output
+
+class AbstractParameterizedSymbol extends ParameterizedSymbol implements AbstractSymbol {
+    IOHandler: IOHandler
+    --
+    ?
+}
+
+abstract class IOHandler {
+    extendedWait: Long
+    --
+    getExtendedWait(): Long
+    setExtendedWait(extendedWait: Long): void
+    isEnabled(context: ExecutionContext): boolean
+    preSendUpdate(context: ExecutionContext): void
+    generateProtocolMessage(context: ExecutionContext): \nProtocolMessage
+    postSendUpdate(context: ExecutionContext): void
+    postReceiveUpdate(output: AbstractOutput, \nabstractOutputChecker: AbstractOutputChecker, context: \nExecutionContext): void
+    --
+    MESSAGE_SEPARATOR: String
+    REPEATING_INDICATOR: String
+    TIMEOUT: String
+    UNKNOWN_MESSAGE: String
+    SOCKET_CLOSED: String
+    DISABLED: String
+    --
+    timeout(): AbstractOutput
+    unknown(): AbstractOutput
+    socketClosed(): AbstractOutput
+    disabled(): AbstractOutput
+    isComposite(): boolean
+    isAtomic(): boolean
+    isRepeating(): boolean
+    getRepeatedOutput(): AbstractOutput
+    isTimeout(): boolean
+    isSocketClosed(): boolean
+    isDisabled(): boolean
+    isRecordResponse(): boolean
+    hasMessages(): boolean
+    getAtomicOutputs(): List<AbstractOutput>
+    getAtomicOutputs(unrollRepeating: int): List<AbstractOutput>
+    getAtomicAbstractionStrings(): List<String>
+    getAtomicAbstractionStrings(unrollRepeating: int): List<String>
+}
 
 note top of ParameterizedSymbol : Note that this is from RALib.
 abstract class ParameterizedSymbol {
@@ -24,7 +67,7 @@ class InputSymbol extends ParameterizedSymbol {
     toString(): String
 }
 
-abstract class AbstractSymbol {
+interface AbstractSymbol {
     name: String
     isInput: boolean
     
@@ -37,63 +80,32 @@ abstract class AbstractSymbol {
     toString(): String
 }
 
-
-
 abstract class AbstractInput extends AbstractSymbol {
-    extendedWait: Long
-
+    IOHandler: IOHandler
+    
     AbstractInput(): void
     AbstractInput(name: String): void
-    getExtendedWait(): Long
-    setExtendedWait(extendedWait: Long): void
     getPreferredMapper(sulConfig: SulConfig): Mapper
-    isEnabled(context: ExecutionContext): boolean
-    preSendUpdate(context: ExecutionContext): void
-    generateProtocolMessage(context: ExecutionContext): \nProtocolMessage
-    postSendUpdate(context: ExecutionContext): void
-    postReceiveUpdate(output: AbstractOutput, \nabstractOutputChecker: AbstractOutputChecker, context: \nExecutionContext): void
     getInputType(): Enum<?>
 }
 
 abstract class AbstractOutput extends AbstractSymbol {
-    MESSAGE_SEPARATOR: String
-    REPEATING_INDICATOR: String
-    TIMEOUT: String
-    UNKNOWN_MESSAGE: String
-    SOCKET_CLOSED: String
-    DISABLED: String
     specialOutputsMap: Map<String, AbstractOutput>
-    alive: boolean
     messages: List<ProtocolMessage>
+    alive: boolean
+    IOHandler: IOHandler
 
-    timeout(): AbstractOutput
-    unknown(): AbstractOutput
-    socketClosed(): AbstractOutput
-    disabled(): AbstractOutput
     getSpecialOutput(symbolName: String): AbstractOutput
     AbstractOutput(): void
     AbstractOutput(name: String): void
     AbstractOutput(name: String, messages: List<ProtocolMessage>)
-    isComposite(): boolean
-    isAtomic(): boolean
-    isRepeating(): boolean
-    getRepeatedOutput(): AbstractOutput
-    isTimeout(): boolean
-    isSocketClosed(): boolean
-    isDisabled(): boolean
-    isRecordResponse(): boolean
-    hasMessages(): boolean
-    getAtomicOutputs(): List<AbstractOutput>
-    getAtomicOutputs(unrollRepeating: int): List<AbstractOutput>
-    getAtomicAbstractionStrings(): List<String>
-    getAtomicAbstractionStrings(unrollRepeating: int): List<String>
     toDetailedString(): String
-    buildContentInfo(): String
     getMessages(): List<ProtocolMessage>
-    isAlive(): boolean
-    setAlive(): void
     equals(o: Object): boolean
     hashCode(): int
+    isAlive(): boolean
+    setAlive(): void
+    buildContentInfo(): String
 }
 
 interface AlphabetBuilder {
@@ -106,4 +118,7 @@ interface AlphabetBuilder {
 }
 
 AlphabetBuilder <-- AbstractInput
+IOHandler -- AbstractOutput
+IOHandler -- AbstractInput
+IOHandler -- AbstractParameterizedSymbol
 @enduml
