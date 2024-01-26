@@ -36,8 +36,6 @@ class StateFuzzerStandard implements StateFuzzer {
     exportHypothesis(hypothesis: StateMachine, destination: File): void
 }
 
-
-note top of StateFuzzerComposer: Make more general for use with RA,\nintroduce possible abstractions over Learnlib/RALib types
 interface StateFuzzerComposer {
     NON_DET_FILENAME: String
     QUERY_FILENAME: String
