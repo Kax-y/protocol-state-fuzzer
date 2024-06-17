@@ -4,8 +4,6 @@ import java.util.Random;
 
 public class ParameterizedServer {
     private static final Integer MAX_MSG_ID = Integer.MAX_VALUE;
-    public static record Msg (Integer msgId) {};
-    public static record Ack (Integer nextMsgId) {};
 
     private Integer nextMsgId;
     private Random rand;
@@ -16,11 +14,27 @@ public class ParameterizedServer {
     }
 
     public Ack send(Msg m) {
-        if (nextMsgId == null || m.msgId().equals(nextMsgId)) {
+        if (nextMsgId == null || m.msgId.equals(nextMsgId)) {
             nextMsgId = rand.nextInt(MAX_MSG_ID);
             return new Ack(nextMsgId);
         } else {
             return null;
+        }
+    }
+
+    public static class Msg {
+        public final Integer msgId;
+
+        public Msg(Integer msgId) {
+            this.msgId = msgId;
+         }
+    }
+
+    public static class Ack {
+        public final Integer msgId;
+
+        public Ack(Integer msgId){
+            this.msgId = msgId;
         }
     }
 }

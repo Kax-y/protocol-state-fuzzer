@@ -56,7 +56,7 @@ public class ParameterizedServerSul extends DataWordSUL
 
         Ack ack = server.send(new Msg((Integer) values[0].getId()));
         if (ack != null) {
-            DataValue dv = new DataValue<>(MSG_ID, ack.nextMsgId());
+            DataValue dv = new DataValue<>(MSG_ID, ack.msgId);
             DataValue output = remapDataValue(dv);
             return new PSymbolInstance(O_ACK, output);
         } else {
