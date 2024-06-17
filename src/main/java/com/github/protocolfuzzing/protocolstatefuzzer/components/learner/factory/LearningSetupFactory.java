@@ -70,28 +70,28 @@ public class LearningSetupFactory {
             LearnerConfig config,
             MealyMembershipOracle<I, O> sulOracle,
             Alphabet<I> alphabet) {
-        return switch (config.getLearningAlgorithm()) {
-            case LSTAR ->
-                new ExtensibleLStarMealy<>(alphabet, sulOracle, new ArrayList<>(),
+        switch (config.getLearningAlgorithm()) {
+            case LSTAR:
+                return new ExtensibleLStarMealy<>(alphabet, sulOracle, new ArrayList<>(),
                         ObservationTableCEXHandlers.CLASSIC_LSTAR, ClosingStrategies.CLOSE_SHORTEST);
 
-            case TTT ->
-                new TTTLearnerMealyBuilder<I, O>()
+            case TTT:
+                return new TTTLearnerMealyBuilder<I, O>()
                         .withAlphabet(alphabet)
                         .withOracle(sulOracle)
                         .withAnalyzer(AcexAnalyzers.BINARY_SEARCH_FWD)
                         .create();
 
-            case RS ->
-                new ExtensibleLStarMealy<>(alphabet, sulOracle, new ArrayList<>(),
+            case RS:
+                return new ExtensibleLStarMealy<>(alphabet, sulOracle, new ArrayList<>(),
                         ObservationTableCEXHandlers.RIVEST_SCHAPIRE, ClosingStrategies.CLOSE_SHORTEST);
 
-            case KV ->
-                new KearnsVaziraniMealy<>(alphabet, sulOracle, false, AcexAnalyzers.LINEAR_FWD);
+            case KV:
+                return new KearnsVaziraniMealy<>(alphabet, sulOracle, false, AcexAnalyzers.LINEAR_FWD);
 
-            default ->
+            default:
                 throw new RuntimeException("Learner algorithm " + config.getLearningAlgorithm() + " is not supported");
-        };
+        }
     }
 
     /**
@@ -133,18 +133,18 @@ public class LearningSetupFactory {
         TreeOracleFactory hypFactory = (RegisterAutomaton hyp) -> new MultiTheoryTreeOracle(new SimulatorOracle(hyp),
                 teachers, consts, solver);
 
-        return switch (config.getLearningAlgorithm()) {
-            case RALAMBDA ->
-                new RaLambda(mto, hypFactory, slo, consts, !config.getDisableIOMode(),
+        switch (config.getLearningAlgorithm()) {
+            case RALAMBDA:
+                return new RaLambda(mto, hypFactory, slo, consts, !config.getDisableIOMode(),
                         alphaArray);
 
-            case RASTAR ->
-                new RaStar(mto, hypFactory, slo, consts, !config.getDisableIOMode(), alphaArray);
+            case RASTAR:
+                return new RaStar(mto, hypFactory, slo, consts, !config.getDisableIOMode(), alphaArray);
 
-            default ->
+            default:
                 throw new RuntimeException(
                         "RA Learner algorithm " + config.getLearningAlgorithm() + " is not supported");
-        };
+        }
     }
 
     /**
@@ -233,35 +233,35 @@ public class LearningSetupFactory {
             MealyMembershipOracle<I, O> sulOracle,
             Alphabet<I> alphabet) {
 
-        return switch (algorithm) {
+        switch (algorithm) {
             // simplest method, but doesn't perform well for large models
-            case RANDOM_WALK ->
-                new RandomWalkEQOracle<>(sul, config.getProbReset(), config.getEquivQueryBound(), true,
+            case RANDOM_WALK:
+                return new RandomWalkEQOracle<>(sul, config.getProbReset(), config.getEquivQueryBound(), true,
                         new Random(config.getSeed()));
 
             // Smarter methods: state coverage, trying to distinguish states, etc.
-            case W_METHOD ->
-                new MealyWMethodEQOracle<>(sulOracle, config.getMaxDepth());
+            case W_METHOD:
+                return new MealyWMethodEQOracle<>(sulOracle, config.getMaxDepth());
 
-            case WP_METHOD ->
-                new MealyWpMethodEQOracle<>(sulOracle, config.getMaxDepth());
+            case WP_METHOD:
+                return new MealyWpMethodEQOracle<>(sulOracle, config.getMaxDepth());
 
-            case RANDOM_WP_METHOD ->
-                new RandomWpMethodEQOracle<>(
+            case RANDOM_WP_METHOD:
+                return new RandomWpMethodEQOracle<>(
                         sulOracle, config.getMinLength(), config.getRandLength(),
                         config.getEquivQueryBound(), config.getSeed());
 
-            case SAMPLED_TESTS ->
-                new SampledTestsEQOracle<I, O>(readTests(config, alphabet), sulOracle);
+            case SAMPLED_TESTS:
+                return new SampledTestsEQOracle<I, O>(readTests(config, alphabet), sulOracle);
 
-            case WP_SAMPLED_TESTS ->
-                new WpSampledTestsEQOracle<I, O>(
+            case WP_SAMPLED_TESTS:
+                return new WpSampledTestsEQOracle<I, O>(
                         readTests(config, alphabet), sulOracle, config.getMinLength(),
                         config.getRandLength(), config.getSeed(), config.getEquivQueryBound());
 
-            default ->
+            default:
                 throw new RuntimeException("Equivalence algorithm " + algorithm + " is not supported");
-        };
+        }
     }
 
     /**
@@ -295,9 +295,9 @@ public class LearningSetupFactory {
                 .filter(pSymbol -> pSymbol instanceof InputSymbol)
                 .toArray(ParameterizedSymbol[]::new);
 
-        return switch (algorithm) {
-            case IO_RANDOM_WALK ->
-                new IORandomWalk(new Random(config.getSeed()),
+        switch (algorithm) {
+            case IO_RANDOM_WALK:
+                return new IORandomWalk(new Random(config.getSeed()),
                         sul,
                         config.getDrawSymbolsUniformly(),
                         config.getProbReset(),
@@ -310,9 +310,9 @@ public class LearningSetupFactory {
                         teachers,
                         inputs);
 
-            default ->
+            default:
                 throw new RuntimeException("Equivalence algorithm " + algorithm + " is not supported for RA");
-        };
+        }
     }
 
     /**

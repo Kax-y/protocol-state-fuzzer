@@ -101,12 +101,13 @@ public abstract class StatisticsTracker<I, ID, OD, CE> {
         stateWriter.flush();
 
         switch (newState) {
-            case FINISHED -> {
+            case FINISHED: {
                 stateWriter.close();
                 stateWriter = null;
+                break;
             }
 
-            case REFINEMENT -> {
+            case REFINEMENT: {
                 if (statistics.getCounterexamples().isEmpty()) {
                     // do nothing if no counterexamples are found yet
                     return;
@@ -127,9 +128,10 @@ public abstract class StatisticsTracker<I, ID, OD, CE> {
 
                 OD hypResponse = lastHypStats.getHypothesis().computeOutput(getInputOfCE(lastCe));
                 stateWriter.printf("HYP Response: %s %n", hypResponse.toString());
+                break;
             }
 
-            default -> {
+            default: {
                 return;
             }
         }
