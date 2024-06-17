@@ -1,13 +1,10 @@
 package com.github.protocolfuzzing.protocolstatefuzzer.components.learner.alphabet;
 
-import java.io.Serial;
-
 /**
  * Exception used by the AlphabetSerializer.
  */
 public class AlphabetSerializerException extends Exception {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     /**

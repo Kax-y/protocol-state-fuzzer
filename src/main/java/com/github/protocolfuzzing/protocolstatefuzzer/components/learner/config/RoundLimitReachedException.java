@@ -1,13 +1,11 @@
 package com.github.protocolfuzzing.protocolstatefuzzer.components.learner.config;
 
-import java.io.Serial;
 
 /**
  * Exception used when the specified round limit has been reached.
  */
 public class RoundLimitReachedException extends RuntimeException {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     /** The number of rounds that has been reached. */

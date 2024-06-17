@@ -2,8 +2,6 @@ package com.github.protocolfuzzing.protocolstatefuzzer.components.learner.oracle
 
 import net.automatalib.word.Word;
 
-import java.io.Serial;
-
 /**
  * Exception used by the {@link CachingSULOracle}.
  * <p>
@@ -12,7 +10,6 @@ import java.io.Serial;
  */
 public class CacheInconsistencyException extends NonDeterminismException {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     /**

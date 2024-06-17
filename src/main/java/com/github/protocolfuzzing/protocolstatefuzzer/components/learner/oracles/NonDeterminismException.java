@@ -2,7 +2,6 @@ package com.github.protocolfuzzing.protocolstatefuzzer.components.learner.oracle
 
 import net.automatalib.word.Word;
 
-import java.io.Serial;
 
 /**
  * Exception used by {@link MultipleRunsSULOracle} and subclasses.
@@ -11,9 +10,9 @@ import java.io.Serial;
  * the full new output and the (possibly shorter) old output with which it
  * disagrees.
  */
+@SuppressWarnings("serial")
 public class NonDeterminismException extends RuntimeException {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     /** The input before the specified one in the constructor. */

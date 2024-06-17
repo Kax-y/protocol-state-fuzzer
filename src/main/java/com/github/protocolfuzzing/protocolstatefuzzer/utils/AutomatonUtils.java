@@ -3,7 +3,6 @@ package com.github.protocolfuzzing.protocolstatefuzzer.utils;
 import net.automatalib.automaton.UniversalDeterministicAutomaton;
 import net.automatalib.word.Word;
 
-import java.io.Serial;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashSet;
@@ -260,7 +259,6 @@ public class AutomatonUtils {
      * @param <I>        the type of inputs
      */
     public static class PredMap <S,I> extends LinkedHashMap<S, Collection<PredStruct<S, I>>>{
-        @Serial
         private static final long serialVersionUID = 1L;
     }
 

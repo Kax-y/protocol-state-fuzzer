@@ -1,6 +1,5 @@
 package com.github.protocolfuzzing.protocolstatefuzzer.components.learner.config;
 
-import java.io.Serial;
 import java.time.Duration;
 
 /**
@@ -8,7 +7,6 @@ import java.time.Duration;
  */
 public class TimeLimitReachedException extends RuntimeException {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     /** The duration that has been exceeded. */

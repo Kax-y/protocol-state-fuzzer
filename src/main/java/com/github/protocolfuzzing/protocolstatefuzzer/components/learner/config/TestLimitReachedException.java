@@ -1,13 +1,10 @@
 package com.github.protocolfuzzing.protocolstatefuzzer.components.learner.config;
 
-import java.io.Serial;
-
 /**
  * Exception used when the specified test limit has been reached.
  */
 public class TestLimitReachedException extends RuntimeException {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     /** The number of tests that has been reached. */
