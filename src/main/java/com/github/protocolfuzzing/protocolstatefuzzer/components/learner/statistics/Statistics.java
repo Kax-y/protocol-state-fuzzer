@@ -8,6 +8,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Statistics collected over the learning process.
@@ -120,13 +121,13 @@ public class Statistics<I, ID, OD, CE> {
 
         if (!hypStats.isEmpty()) {
             pw.println("Number of inputs when hypothesis was generated: "
-                    + hypStats.stream().map(s -> s.getSnapshot().getInputs()).toList());
+                    + hypStats.stream().map(s -> s.getSnapshot().getInputs()).collect(Collectors.toList()));
 
             pw.println("Number of tests when hypothesis was generated: "
-                    + hypStats.stream().map(s -> s.getSnapshot().getTests()).toList());
+                    + hypStats.stream().map(s -> s.getSnapshot().getTests()).collect(Collectors.toList()));
 
             pw.println("Time (ms) when hypothesis was generated: "
-                    + hypStats.stream().map(s -> s.getSnapshot().getTime()).toList());
+                    + hypStats.stream().map(s -> s.getSnapshot().getTime()).collect(Collectors.toList()));
 
             List<HypothesisStatistics<ID, OD, CE>> invalidatedHypStates = new ArrayList<>(hypStats);
             if (invalidatedHypStates.get(invalidatedHypStates.size() - 1).getCounterexample() == null) {
@@ -134,13 +135,13 @@ public class Statistics<I, ID, OD, CE> {
             }
 
             pw.println("Number of inputs when counterexample was found: "
-                    + invalidatedHypStates.stream().map(s -> s.getCounterexampleSnapshot().getInputs()).toList());
+                    + invalidatedHypStates.stream().map(s -> s.getCounterexampleSnapshot().getInputs()).collect(Collectors.toList()));
 
             pw.println("Number of tests when counterexample was found: "
-                    + invalidatedHypStates.stream().map(s -> s.getCounterexampleSnapshot().getTests()).toList());
+                    + invalidatedHypStates.stream().map(s -> s.getCounterexampleSnapshot().getTests()).collect(Collectors.toList()));
 
             pw.println("Time (ms) when counterexample was found: "
-                    + invalidatedHypStates.stream().map(s -> s.getCounterexampleSnapshot().getTime()).toList());
+                    + invalidatedHypStates.stream().map(s -> s.getCounterexampleSnapshot().getTime()).collect(Collectors.toList()));
         }
         pw.close();
     }

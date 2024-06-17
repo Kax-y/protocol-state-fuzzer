@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Reads and writes tests from/to files.
@@ -118,7 +119,7 @@ public class TestParser<I> {
         List<String> flattenedInputStrings = inputStrings.stream()
                 .map(i -> i.startsWith("@") ? new String[]{i} : i.split("\\s+"))
                 .flatMap(Arrays::stream)
-                .toList();
+                .collect(Collectors.toList());
 
         List<Word<I>> tests = new ArrayList<>();
         List<String> currentTestStrings = new ArrayList<>();
