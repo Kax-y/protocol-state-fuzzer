@@ -25,8 +25,8 @@ public class InputBuilderMealy<I> implements InputBuilder<I> {
     /**
      * Builds an input symbol given its name.
      *
-     * @param name  the name of the input symbol
-     * @return      the input symbol
+     * @param inputString  the name of the input symbol
+     * @return             the input symbol
      */
     @Override
     public I buildInput(String inputString) {

@@ -42,7 +42,7 @@ public class PSymbolInstanceSerializer {
     public String serializeSymbolInstance(PSymbolInstance symbol) {
         StringBuilder sb = new StringBuilder();
         String methodName = symbol.getBaseSymbol().getName();
-        sb.append(methodName.substring(0));
+        sb.append(methodName);
         sb.append("{");
 
         for (DataValue<?> dv : symbol.getParameterValues()) {
@@ -51,25 +51,6 @@ public class PSymbolInstanceSerializer {
         }
 
         if (symbol.getParameterValues().length > 0) {
-            sb.deleteCharAt(sb.length()-1);
-        }
-        sb.append("}");
-
-        return sb.toString();
-    }
-
-    public String serializeSymbolQuery(ParameterizedSymbol symbol) {
-        StringBuilder sb = new StringBuilder();
-        String methodName = symbol.getName();
-        sb.append(methodName.substring(0));
-        sb.append("{");
-
-        for (DataType dt : symbol.getPtypes()) {
-            sb.append(dt.getName()).append("=").append("?");
-            sb.append(",");
-        }
-
-        if (symbol.getPtypes().length > 0) {
             sb.deleteCharAt(sb.length()-1);
         }
         sb.append("}");
@@ -94,7 +75,7 @@ public class PSymbolInstanceSerializer {
             symbol = getParameterizedSymbol(symbolString);
             values = new DataValue [] {};
         } else {
-            String actionName = symbolString.substring(0, startParam);
+            String actionName = symbolString.substring(startParam);
             symbol = getParameterizedSymbol(actionName);
             if (!symbolString.endsWith("]")) {
                 throw new RuntimeException("Symbol instance: " + symbolString);
