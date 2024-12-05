@@ -4,10 +4,12 @@ import com.github.protocolfuzzing.protocolstatefuzzer.components.learner.alphabe
 import com.github.protocolfuzzing.protocolstatefuzzer.components.learner.alphabet.AlphabetSerializerException;
 import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.core.SulBuilder;
 import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.core.SulWrapper;
+import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.mapper.abstractsymbols.InputBuilder;
 import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.mapper.abstractsymbols.MapperInput;
 import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.mapper.abstractsymbols.MapperOutput;
 import com.github.protocolfuzzing.protocolstatefuzzer.statefuzzer.testrunner.timingprobe.config.TimingProbeConfig;
 import com.github.protocolfuzzing.protocolstatefuzzer.statefuzzer.testrunner.timingprobe.config.TimingProbeEnabler;
+import net.automatalib.alphabet.Alphabet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,11 +31,14 @@ public class TimingProbeStandard<I extends MapperInput<O, P, E>, O extends Mappe
     /** Stores the TimingProbeConfig from the TimingProbeEnabler constructor parameter. */
     protected TimingProbeConfig timingProbeConfig;
 
+    /** Stores the ProbeTestRunner, which is created if {@link #isActive()}. */
+    protected ProbeTestRunner<I, O, P, E> probeTestRunner = null;
+
     /** Stores the constructor parameter. */
     protected AlphabetBuilder<I> alphabetBuilder;
 
-    /** Stores the ProbeTestRunner, which is created if {@link #isActive()}. */
-    protected ProbeTestRunner<I, O, P, E> probeTestRunner = null;
+    /** Stores input alphabet. */
+    private Alphabet<I> alphabet;
 
     /**
      * Constructs a new instance from the given parameters.
@@ -42,22 +47,25 @@ public class TimingProbeStandard<I extends MapperInput<O, P, E>, O extends Mappe
      * Invoke {@link #initialize()} afterwards.
      *
      * @param timingProbeEnabler  the configuration that enables testing with the timing probe
+     * @param inputBuilder        the builder of input symbols
      * @param alphabetBuilder     the builder of the alphabet
      * @param sulBuilder          the builder of the sul
      * @param sulWrapper          the wrapper of the sul
      */
     public TimingProbeStandard(
         TimingProbeEnabler timingProbeEnabler,
+        InputBuilder<I> inputBuilder,
         AlphabetBuilder<I> alphabetBuilder,
         SulBuilder<I, O, E> sulBuilder,
         SulWrapper<I, O, E> sulWrapper
     ) {
         this.timingProbeConfig = timingProbeEnabler.getTimingProbeConfig();
         this.alphabetBuilder = alphabetBuilder;
+        this.alphabet = alphabetBuilder.build(timingProbeEnabler.getLearnerConfig());
 
         if(isActive()) {
             this.probeTestRunner = new ProbeTestRunner<>(
-                timingProbeEnabler, alphabetBuilder, sulBuilder, sulWrapper
+                timingProbeEnabler, inputBuilder, sulBuilder, sulWrapper
             );
         }
     }
@@ -89,7 +97,7 @@ public class TimingProbeStandard<I extends MapperInput<O, P, E>, O extends Mappe
         try {
             Map<String, Integer> bestTimes = findDeterministicTimesValues();
             LOGGER.info(TimingProbe.present(bestTimes));
-            alphabetBuilder.exportAlphabetToFile(timingProbeConfig.getProbeExport(), probeTestRunner.getAlphabet());
+            alphabetBuilder.exportAlphabetToFile(timingProbeConfig.getProbeExport(), alphabet);
 
         } catch (ProbeException | IOException | AlphabetSerializerException e) {
             LOGGER.error(e.getMessage());
@@ -183,7 +191,7 @@ public class TimingProbeStandard<I extends MapperInput<O, P, E>, O extends Mappe
         }
 
         // check if the command is an alphabet input
-        for (I in : probeTestRunner.getAlphabet()) {
+        for (I in : alphabet) {
             if (in.toString().contentEquals(cmd)) {
                 return true;
             }
@@ -298,7 +306,7 @@ public class TimingProbeStandard<I extends MapperInput<O, P, E>, O extends Mappe
         } else if (cmd.contentEquals("runWait")) {
             probeTestRunner.getSulConfig().setStartWait(timeL);
         } else {
-            for (I in : probeTestRunner.getAlphabet()) {
+            for (I in : alphabet) {
                 if (in.toString().contentEquals(cmd)) in.setExtendedWait(timeL);
             }
         }

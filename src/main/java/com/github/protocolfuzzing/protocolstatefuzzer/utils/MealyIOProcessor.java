@@ -1,10 +1,8 @@
 package com.github.protocolfuzzing.protocolstatefuzzer.utils;
 
+import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.mapper.abstractsymbols.InputBuilder;
 import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.mapper.abstractsymbols.OutputBuilder;
 import net.automatalib.common.util.Pair;
-
-import java.util.Collection;
-import java.util.LinkedHashMap;
 
 /**
  * Implementation of Mealy Machine input and output pair processor.
@@ -16,33 +14,25 @@ import java.util.LinkedHashMap;
 public class MealyIOProcessor<I, O> implements MealyDotParser.MealyInputOutputProcessor<I, O> {
 
     /** Stores the constructor parameter. */
-    protected LinkedHashMap<String, I> inputMap;
-
-    /** Stores the constructor parameter. */
     protected OutputBuilder<O> outputBuilder;
+
+    protected InputBuilder<I> inputBuilder;
 
     /**
      * Constructs a new instance from the given parameter.
      *
-     * @param inputs         the collection of input symbols
-     * @param outputBuilder  the builder for the output symbols
+     * @param inputBuilder   the builder for input symbols
+     * @param outputBuilder  the builder for output symbols
      */
-    public MealyIOProcessor(Collection<I> inputs, OutputBuilder<O> outputBuilder) {
-        this.inputMap = new LinkedHashMap<>();
-        inputs.forEach(i -> inputMap.put(i.toString(), i));
+    public MealyIOProcessor(InputBuilder<I> inputBuilder, OutputBuilder<O> outputBuilder) {
+        this.inputBuilder = inputBuilder;
         this.outputBuilder = outputBuilder;
     }
 
     @Override
     public Pair<I, O> processMealyInputOutput(String inputName, String outputName) {
         String inputNameCleaned = inputName.trim();
-        I input = inputMap.get(inputNameCleaned);
-
-        if (input == null) {
-            throw new RuntimeException("Input " + inputNameCleaned + " could not be found in the given alphabet.\n "
-                + inputMap.toString());
-        }
-
+        I input = inputBuilder.buildInput(inputNameCleaned);
         String outputNameCleaned = outputName.trim();
         O output = outputBuilder.buildOutput(outputNameCleaned);
 

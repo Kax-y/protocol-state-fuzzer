@@ -1,6 +1,6 @@
 package com.github.protocolfuzzing.protocolstatefuzzer.statefuzzer.testrunner.core;
 
-import net.automatalib.alphabet.Alphabet;
+import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.mapper.abstractsymbols.InputBuilder;
 import net.automatalib.word.Word;
 
 import java.io.BufferedReader;
@@ -13,9 +13,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Reads and writes tests from/to files.
@@ -26,6 +24,8 @@ import java.util.Map;
  * @param <I>  the type of inputs
  */
 public class TestParser<I> {
+
+
 
     /**
      * Writes test to file given the filename.
@@ -61,34 +61,28 @@ public class TestParser<I> {
     /**
      * Reads a single test from file.
      *
-     * @param alphabet  the alphabet of the test
-     * @param filename  the name of the source file
-     * @return          the test as a word of inputs
+     * @param inputBuilder  the symbol parser
+     * @param filename      the name of the source file
+     * @return              the test as a word of inputs
      *
      * @throws IOException  if an error during reading occurs
      */
-    public Word<I> readTest(Alphabet<I> alphabet, String filename) throws IOException {
-        return readTest(alphabet, parseTestFile(filename));
+    public Word<I> readTest(InputBuilder<I> inputBuilder, String filename) throws IOException {
+        return readTest(inputBuilder, parseTestFile(filename));
     }
 
     /**
      * Reads a single test from a list of input strings.
      *
-     * @param alphabet          the alphabet of the test
+     * @param inputBuilder      the symbol parser
      * @param testInputStrings  the list containing input strings
      * @return                  the test as a word of inputs
      */
-    public Word<I> readTest(Alphabet<I> alphabet, List<String> testInputStrings) {
-        Map<String, I> inputs = new LinkedHashMap<>();
-        alphabet.forEach(i -> inputs.put(i.toString(), i));
-
+    public Word<I> readTest(InputBuilder<I> inputBuilder, List<String> testInputStrings) {
         Word<I> inputWord = Word.epsilon();
         for (String inputString : testInputStrings) {
-            inputString = inputString.trim();
-            if (!inputs.containsKey(inputString)) {
-                throw new RuntimeException("Input \"" + inputString + "\" is missing from the alphabet");
-            }
-            inputWord = inputWord.append(inputs.get(inputString));
+            I input = inputBuilder.buildInput(inputString);
+            inputWord = inputWord.append(input);
         }
 
         return inputWord;
@@ -106,14 +100,14 @@ public class TestParser<I> {
      * <li> commented line (starts with # or !)
      * </ul>
      *
-     * @param alphabet  the alphabet of the tests
-     * @param filename  the name of the source file
-     * @return          the tests as a list of words of inputs, where each word
-     *                  is a test specified in the source file
+     * @param inputBuilder  the symbol parser
+     * @param filename      the name of the source file
+     * @return          	the tests as a list of words of inputs, where each word
+     *                 	    is a test specified in the source file
      *
      * @throws IOException  if an error during reading occurs
      */
-    public List<Word<I>> readTests(Alphabet<I> alphabet, String filename) throws IOException {
+    public List<Word<I>> readTests(InputBuilder<I> inputBuilder, String filename) throws IOException {
         List<String> inputStrings = parseTestFile(filename);
         List<String> flattenedInputStrings = inputStrings.stream()
                 .map(i -> i.startsWith("@") ? new String[]{i} : i.split("\\s+"))
@@ -124,14 +118,14 @@ public class TestParser<I> {
         List<String> currentTestStrings = new ArrayList<>();
         for (String inputString : flattenedInputStrings) {
             if (inputString.equals("reset")) {
-                tests.add(readTest(alphabet, currentTestStrings));
+                tests.add(readTest(inputBuilder, currentTestStrings));
                 currentTestStrings.clear();
             } else {
                 currentTestStrings.add(inputString);
             }
         }
         if (!inputStrings.isEmpty()) {
-            tests.add(readTest(alphabet, currentTestStrings));
+            tests.add(readTest(inputBuilder, currentTestStrings));
         }
         return tests;
     }

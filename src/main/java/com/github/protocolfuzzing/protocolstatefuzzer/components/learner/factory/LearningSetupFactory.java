@@ -4,6 +4,7 @@ import com.github.protocolfuzzing.protocolstatefuzzer.components.learner.config.
 import com.github.protocolfuzzing.protocolstatefuzzer.components.learner.oracles.RandomWpMethodEQOracle;
 import com.github.protocolfuzzing.protocolstatefuzzer.components.learner.oracles.SampledTestsEQOracle;
 import com.github.protocolfuzzing.protocolstatefuzzer.components.learner.oracles.WpSampledTestsEQOracle;
+import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.mapper.abstractsymbols.InputBuilderMealy;
 import com.github.protocolfuzzing.protocolstatefuzzer.statefuzzer.testrunner.core.TestParser;
 import de.learnlib.acex.AcexAnalyzers;
 import de.learnlib.algorithm.LearningAlgorithm.MealyLearner;
@@ -326,7 +327,7 @@ public class LearningSetupFactory {
      */
     protected static <I> List<Word<I>> readTests(LearnerConfig config, Alphabet<I> alphabet) {
         try {
-            return new TestParser<I>().readTests(alphabet, config.getTestFile());
+            return new TestParser<I>().readTests(new InputBuilderMealy<>(alphabet), config.getTestFile());
         } catch (IOException e) {
             throw new RuntimeException(
                     "Could not read tests from file " + config.getTestFile() + ": " + e.getMessage());

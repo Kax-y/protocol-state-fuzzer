@@ -1,11 +1,11 @@
 package com.github.protocolfuzzing.protocolstatefuzzer.statefuzzer.testrunner.core;
 
-import com.github.protocolfuzzing.protocolstatefuzzer.components.learner.alphabet.AlphabetBuilder;
 import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.core.AbstractSul;
 import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.core.SulBuilder;
 import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.core.SulWrapper;
 import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.core.config.SulConfig;
 import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.mapper.Mapper;
+import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.mapper.abstractsymbols.InputBuilder;
 import com.github.protocolfuzzing.protocolstatefuzzer.components.sul.mapper.abstractsymbols.MapperOutput;
 import com.github.protocolfuzzing.protocolstatefuzzer.statefuzzer.testrunner.core.config.TestRunnerEnabler;
 import com.github.protocolfuzzing.protocolstatefuzzer.utils.CleanupTasks;
@@ -13,7 +13,6 @@ import com.github.protocolfuzzing.protocolstatefuzzer.utils.MealyIOProcessor;
 import com.github.protocolfuzzing.protocolstatefuzzer.utils.ModelFactory;
 import de.learnlib.oracle.MembershipOracle.MealyMembershipOracle;
 import de.learnlib.oracle.membership.SULOracle;
-import net.automatalib.alphabet.Alphabet;
 import net.automatalib.automaton.transducer.MealyMachine;
 import net.automatalib.word.Word;
 import org.apache.logging.log4j.LogManager;
@@ -39,9 +38,6 @@ public class TestRunnerStandard<I, O extends MapperOutput<O, P>, P, E> implement
     /** Stores the constructor parameter. */
     protected TestRunnerEnabler testRunnerEnabler;
 
-    /** The built alphabet using the AlphabetBuilder constructor parameter. */
-    protected Alphabet<I> alphabet;
-
     /** The Mapper provided from the built {@link #sulOracle}. */
     protected Mapper<I, O, E> mapper;
 
@@ -54,6 +50,9 @@ public class TestRunnerStandard<I, O extends MapperOutput<O, P>, P, E> implement
     /** Stores the cleanup tasks of the TestRunner. */
     protected CleanupTasks cleanupTasks;
 
+    /** Builds input symbols. */
+    private InputBuilder<I> inputBuilder;
+
     /**
      * Constructs a new instance from the given parameters.
      * <p>
@@ -61,18 +60,18 @@ public class TestRunnerStandard<I, O extends MapperOutput<O, P>, P, E> implement
      * Invoke {@link #initialize()} afterwards.
      *
      * @param testRunnerEnabler        the configuration that enables the testing
-     * @param alphabetBuilder          the builder of the alphabet
+     * @param inputBuilder             the builder of input symbols
      * @param sulBuilder               the builder of the sul
      * @param sulWrapper               the wrapper of the sul
      */
     public TestRunnerStandard(
         TestRunnerEnabler testRunnerEnabler,
-        AlphabetBuilder<I> alphabetBuilder,
+        InputBuilder<I> inputBuilder,
         SulBuilder<I, O, E> sulBuilder,
         SulWrapper<I, O, E> sulWrapper
     ) {
         this.testRunnerEnabler = testRunnerEnabler;
-        this.alphabet = alphabetBuilder.build(testRunnerEnabler.getLearnerConfig());
+        this.inputBuilder = inputBuilder;
         this.cleanupTasks = new CleanupTasks();
 
         AbstractSul<I, O, E> abstractSul = sulBuilder.build(testRunnerEnabler.getSulConfig(), cleanupTasks);
@@ -97,7 +96,7 @@ public class TestRunnerStandard<I, O extends MapperOutput<O, P>, P, E> implement
             try {
                 this.testSpec = ModelFactory.buildProtocolModel(
                     testRunnerEnabler.getTestRunnerConfig().getTestSpecification(),
-                    new MealyIOProcessor<>(alphabet, mapper.getOutputBuilder())
+                    new MealyIOProcessor<>(inputBuilder, mapper.getOutputBuilder())
                 );
 
             } catch (IOException e) {
@@ -105,15 +104,6 @@ public class TestRunnerStandard<I, O extends MapperOutput<O, P>, P, E> implement
             }
         }
         return this;
-    }
-
-    /**
-     * Returns the alphabet to be used during testing.
-     *
-     * @return  the alphabet to be used during testing
-     */
-    public Alphabet<I> getAlphabet() {
-        return alphabet;
     }
 
     /**
@@ -169,11 +159,11 @@ public class TestRunnerStandard<I, O extends MapperOutput<O, P>, P, E> implement
         String testFileOrTestString = testRunnerEnabler.getTestRunnerConfig().getTest();
 
         if (new File(testFileOrTestString).exists()) {
-            tests = testParser.readTests(alphabet, testFileOrTestString);
+            tests = testParser.readTests(inputBuilder, testFileOrTestString);
         } else {
             LOGGER.info("File {} does not exist, interpreting argument as test", testFileOrTestString);
             String[] testStrings = testFileOrTestString.split("\\s+");
-            tests = List.of(testParser.readTest(alphabet, Arrays.asList(testStrings)));
+            tests = List.of(testParser.readTest(inputBuilder, Arrays.asList(testStrings)));
         }
 
         List<TestRunnerResult<Word<I>, Word<O>>> results = new ArrayList<>();
